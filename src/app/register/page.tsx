@@ -1,11 +1,39 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getAllUsers } from '@/lib/dataService'
 import { User } from '@/lib/mockData'
 
-export default function RegisterPage() {
+// 创建一个加载组件
+function RegisterFormSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900">用户注册</h2>
+          <p className="mt-2 text-sm text-gray-600">正在加载...</p>
+        </div>
+      </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+            <div className="h-10 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-10 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div className="h-10 bg-gray-200 rounded mb-6"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 将原有的组件逻辑提取到这个组件中
+function RegisterForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -199,9 +227,11 @@ export default function RegisterPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <h4 className="text-sm font-semibold text-blue-800 mb-2">邀请奖励说明</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• 使用邀请码注册，您的邀请人可获得您交易手续费的 20% 作为返佣</li>
-                  <li>• 返佣不会影响您的交易体验和手续费</li>
-                  <li>• 帮助朋友获得收益，共同成长</li>
+                  <li>
+                    • 您将被 <span className="font-medium">{inviter.username}</span> 邀请
+                  </li>
+                  <li>• 您的交易将产生 20% 的手续费返佣给邀请人</li>
+                  <li>• 返佣不会影响您的交易体验</li>
                 </ul>
               </div>
             )}
@@ -209,47 +239,49 @@ export default function RegisterPage() {
             {/* 错误/成功消息 */}
             {message && (
               <div
-                className={`p-4 rounded-md ${
+                className={`rounded-md p-4 ${
                   message.type === 'error' ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'
                 }`}
               >
-                <div className={`flex items-center ${message.type === 'error' ? 'text-red-700' : 'text-green-700'}`}>
-                  {message.type === 'error' ? (
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                  <span className="text-sm font-medium">{message.text}</span>
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    {message.type === 'error' ? (
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="ml-3">
+                    <p className={`text-sm font-medium ${message.type === 'error' ? 'text-red-800' : 'text-green-800'}`}>{message.text}</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 注册按钮 */}
+            {/* 提交按钮 */}
             <div>
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                  loading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
                 {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <div className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path
                         className="opacity-75"
@@ -258,41 +290,38 @@ export default function RegisterPage() {
                       ></path>
                     </svg>
                     注册中...
-                  </>
+                  </div>
                 ) : (
                   '立即注册'
                 )}
               </button>
             </div>
+
+            {/* 登录链接 */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                已有账户？{' '}
+                <button
+                  type="button"
+                  onClick={() => router.push('/login')}
+                  className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline transition ease-in-out duration-150"
+                >
+                  立即登录
+                </button>
+              </p>
+            </div>
           </form>
-
-          {/* 返回登录链接 */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">已有账户？</span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                返回登录页面
-              </button>
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* 底部信息 */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">注册即表示您同意我们的服务条款和隐私政策</p>
-      </div>
     </div>
+  )
+}
+
+// 主导出组件，包装在 Suspense 中
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterFormSkeleton />}>
+      <RegisterForm />
+    </Suspense>
   )
 }
